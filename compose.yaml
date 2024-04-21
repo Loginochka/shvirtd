@@ -1,0 +1,60 @@
+name: web-site
+
+include:
+  - path: proxy.yaml
+services:
+  web:
+    pull_policy: always
+    image: cr.yandex/crphqdd5pbjh25e8s3tq/flask-py:latest
+    container_name: web-backend
+    environment:
+      DB_PASSWORD: '${DB_PASSWORD}'
+      DB_HOST: db
+      DB_USER: app
+      DB_NAME: virtd
+    depends_on:
+      - db
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
+    networks:
+      backend:
+        ipv4_address: "172.20.0.5"
+    ports:
+      - 5000
+    secrets:
+      - var
+  db:
+    pull_policy: always
+    cap_add:
+      - SYS_NICE
+    image: mysql:8
+    container_name: db-backend
+    environment:
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      MYSQL_DATABASE: virtd
+      MYSQL_USER: app
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
+    networks:
+      backend:
+        ipv4_address: "172.20.0.10"
+#    ports:
+#      - 3306:3306
+    secrets:
+      - var
+networks:
+  backend:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: "172.20.0.0/24"
+secrets:
+  var:
+    file: .env
