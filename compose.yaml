@@ -5,15 +5,16 @@ include:
 services:
   web:
     pull_policy: always
-    image: cr.yandex/crphqdd5pbjh25e8s3tq/flask-py:latest
-    container_name: web-backend
+    image: cr.yandex/crphqdd5pbjh25e8s3tq/flask-py:1.0
+    container_name: web-server
     environment:
-      DB_PASSWORD: '${DB_PASSWORD}'
+      DB_PASSWORD: "${DB_PASSWORD}"
       DB_HOST: db
-      DB_USER: app
-      DB_NAME: virtd
+      DB_USER: "${DB_USER}"
+      DB_NAME: "${DB_NAME}"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     deploy:
       restart_policy:
         condition: on-failure
@@ -22,31 +23,29 @@ services:
     networks:
       backend:
         ipv4_address: "172.20.0.5"
-    ports:
-      - 5000
     secrets:
       - var
   db:
-    pull_policy: always
-    cap_add:
-      - SYS_NICE
     image: mysql:8
-    container_name: db-backend
+    container_name: mysql-database
     environment:
       MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
-      MYSQL_DATABASE: virtd
-      MYSQL_USER: app
+      MYSQL_DATABASE: "${MYSQL_DATABASE}"
+      MYSQL_USER: "${MYSQL_USER}"
       MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
     deploy:
       restart_policy:
         condition: on-failure
         delay: 10s
         max_attempts: 5
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 20s
+      retries: 10
     networks:
       backend:
         ipv4_address: "172.20.0.10"
-#    ports:
-#      - 3306:3306
     secrets:
       - var
 networks:
