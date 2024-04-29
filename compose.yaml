@@ -5,7 +5,7 @@ include:
 services:
   web:
     pull_policy: always
-    image: cr.yandex/crphqdd5pbjh25e8s3tq/flask-py:1.0
+    image: loginochka/flask-py:1.0
     container_name: web-server
     environment:
       DB_PASSWORD: "${DB_PASSWORD}"
